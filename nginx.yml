@@ -1,0 +1,50 @@
+﻿---
+- name: NGINX | Install and configure NGINX
+  hosts: all
+  become: true
+  vars:
+    nginx_listen_port: 8080
+
+  tasks:
+    - name: update
+      yum:
+        update_cache=yes
+      tags:
+        - update yum
+        
+    - name: NGINX | Install EPEL-rep
+      yum:
+        name: epel-release
+        state: latest        
+
+    - name: NGINX | Install NGINX
+      yum:
+        name: nginx
+        state: latest
+      notify:
+        - restart nginx
+      tags:
+        - nginx-package
+
+    - name: NGINX | Create NGINX config from template
+      template:
+        src: templates/njinx.conf.j2
+        dest: /etc/nginx/nginx.conf
+      notify:
+        - reload nginx
+      tags:
+        - nginx-configuration
+        
+  handlers:
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+        enabled: yes
+        
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
+        
+
